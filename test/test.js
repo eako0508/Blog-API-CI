@@ -14,143 +14,89 @@ const {TEST_DATABASE_URL} = require('../config');
 
 chai.use(chaiHttp);
 
-//make functions to generate databases
-function establishTestDB(){
-	const blogStack = [];
-	for(let i=0;i<10;i++){
-		blogStack.push(generateEntries());
-/*
-		blogStack.push({
-			author: {
-				firstName: faker.name.firstName(),
-				lastName: faker.name.lastName()
-			},
-			title: faker.lorem.word(),
-			content: faker.lorem.sentences()
-		});
-*/
-	}
-	return BlogPost.insertMany(blogStack);
+function tearDownDb() {
+  return new Promise((resolve, reject) => {
+    console.warn('Deleting database');
+    mongoose.connection.dropDatabase()
+      .then(result => resolve(result))
+      .catch(err => reject(err));
+  });
 }
 
-function generateEntries(){
-	/*
-	const entry = {};
-	entry.author = generateAuthor();
-	entry.title = generateTitle();
-	entry.content = generateContent();
-	return entry;
-	*/
-	/*
-	return {
-		author: generateAuthor(),
-		title: generateTitle(),
-		content: generateContent()
-	}
-	*/
-	return {
-		author: {
-			firstName: faker.name.firstName(),
-			lastName: faker.name.lastName()
-		},
-		title: faker.lorem.word(),
-		content: faker.lorem.sentences()
-		};
+
+// used to put randomish documents in db
+// so we have data to work with and assert about.
+// we use the Faker library to automatically
+// generate placeholder values for author, title, content
+// and then we insert that data into mongo
+function seedBlogPostData() {
+  console.info('seeding blog post data');
+  const seedData = [];
+  for (let i = 1; i <= 10; i++) {
+    seedData.push({
+      author: {
+        firstName: faker.name.firstName(),
+        lastName: faker.name.lastName()
+      },
+      title: faker.lorem.sentence(),
+      content: faker.lorem.text()
+    });
+  }
+  // this will return a promise
+  return BlogPost.insertMany(seedData);
 }
 
-function generateAuthor(){
-//	const randomName = faker.name.findName();
-//	const randomName = faker.fake("{{name.lastName}}, {{name.lastName}}");
-//	const randomName = faker.name.findName();
-/*
-	return {
-		"firstName": randomName.firstName,
-		"lastName": randomName.lastName
-	};
-*/
-	return {
-		"firstName": faker.name.firstName(),
-		"lastName": faker.name.lastName()
-	};
-}
-function generateTitle(){
-	return faker.lorem.word;
-}
-function generateContent(){
-	return faker.lorem.sentences;
-}
 
-function tearDown(){
-	return mongoose.connection.dropDatabase();
-}
+describe('blog posts API resource', function () {
 
-describe('Blog', function(){
+  before(function () {
+    return runServer(TEST_DATABASE_URL);
+  });
 
-	before(function(){
-		return runServer(TEST_DATABASE_URL);
-	});
-	beforeEach(function(){
-		return establishTestDB();
-	});
-	afterEach(function(){
-		return tearDown();
-	});
+  beforeEach(function () {
+    return seedBlogPostData();
+  });
 
-	after(function(){
-		return closeServer();
-	});
-	describe('GET endpoint',function(){
-		it('should get data from get', function(){
-/*
-		//test db is already established
-		//retrieve data from server and compare.
-		let res;
-//		return chai.require(app)
-		return chai.request(app)
-		  .get('/posts')
-		  .then(_res => {
-				res = _res;
-//				expect(res).to.be.a('object');
-//				expect(res.body).to.include.keys('author', 'title', 'content');
-				expect(res).to.be.status(200);
-				expect(res.body.length).to.be.at.least(1);
-				return BlogPost.count();
-			})
-		  .then(count => {
-//				expect(_count === res.length);
-//				expect(res.body).to.have.length.of(count);
-				res.body.should.have.length.of(count);
-//				expect(res.body.length).to.be.of(count);
-//				expect(res.body).to.be.a('object');
-		  });
-/*
-		.then(function(_count){
-//			expect(res.body).to.length.of(_count);
-		});
-*/
+  afterEach(function () {
+    // tear down database so we ensure no state from this test
+    // effects any coming after.
+    return tearDownDb();
+  });
 
+  after(function () {
+    return closeServer();
+  });
 
-			  let res;
-			  return chai.request(app)
-				.get('/posts')
-				.then(_res => {
-				  res = _res;
-				  res.should.have.status(200);
-				  // otherwise our db seeding didn't work
-				  res.body.should.have.length.of.at.least(1);
+  // note the use of nested `describe` blocks.
+  // this allows us to make clearer, more discrete tests that focus
+  // on proving something small
+  describe('GET endpoint', function () {
 
-				  return BlogPost.count();
-				})
-				.then(count => {
-				  // the number of returned posts should be same
-				  // as number of posts in DB
-				  res.body.should.have.length.of(count);
-				});
-		});
-	});
+    it('should return all existing posts', function () {
+      // strategy:
+      //    1. get back all posts returned by by GET request to `/posts`
+      //    2. prove res has right status, data type
+      //    3. prove the number of posts we got back is equal to number
+      //       in db.
+      let res;
+      return chai.request(app)
+        .get('/posts')
+        .then(_res => {
+          res = _res;
+          res.should.have.status(200);
+          // otherwise our db seeding didn't work
+          res.body.should.have.length.of.at.least(1);
+
+          return BlogPost.count();
+        })
+        .then(count => {
+          // the number of returned posts should be same
+          // as number of posts in DB
+          res.body.should.have.length.of(count);
+        });
+    });
+  });
 });
-
-
 
 
 
