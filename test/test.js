@@ -92,6 +92,45 @@ describe('Blog', function(){
 			  });
 		  });
 	});
+
+
+	describe('POST', function(){
+		it('should create entry', function(){
+			let newEntry = {
+				title: faker.lorem.word(),
+				content: faker.lorem.word(),
+				author: {
+					firstName: faker.name.firstName(),
+					lastName: faker.name.lastName()
+				}
+			};
+			return chai.request(app)
+			  .post('/posts')
+			  .send(newEntry)
+			  .then(res=>{
+				expect(res).to.be.status(201);
+				expect(res).to.be.json;
+				expect(res.body).to.be.a('object');
+				expect(res.body).to.include.keys(
+					'title','content','author');
+				expect(res.body.id).should.not.be.null;
+				expect(res.body.title).to.be.equal(newEntry.title);
+				expect(res.body.content).to.be.equal(newEntry.content);
+				console.log(res.body.author);
+				expect(res.body.author).to.be.equal(
+					`${newEntry.author.firstName} ${newEntry.author.lastName}`);
+		
+				return BlogPost.findById(res.body.id);
+			  })
+			  .then(resp=>{
+				expect(resp.title).to.be.equal(newEntry.title);
+				expect(resp.content).to.be.equal(newEntry.content);
+				expect(resp.author.firstName).to.be.equal(newEntry.author.firstName);
+				expect(resp.author.lastName).to.be.equal(newEntry.author.lastName);
+			  });
+		});
+	});
+
 });
 
 
