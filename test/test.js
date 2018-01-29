@@ -141,61 +141,43 @@ describe('Blog', function(){
 					lastName: faker.name.lastName()
 				}
 			};
-			/*
 			return chai.request(app)
 			  .get('/posts')
 			  .then(res=>{
 				expect(res).to.be.status(200);
-				temp.id = res.body.id;
+				temp.id = res.body[0].id;
 				return chai.request(app)
 				  .put(`/posts/${temp.id}`)
 				  .send(temp)
-				  .then(
-					return BlogPost.findById(temp.id);
-				  );
-			  })
-			  .then(resp=>{
-				expect(resp.body.title).to.be.equal(temp.title);
-			  });
-			*/
-			return BlogPost
-				.findOne()
-				.then(res=>{
-					temp.id = res.id;
-					return chai.request(app)
-						.put(`/posts/${temp.id}`)
-						.send(temp);
-				})
-				.then(res=>{
+				  .then(res=>{
 					expect(res).to.be.status(204);
 					return BlogPost.findById(temp.id);
-				})
-				.then(res=>{
-					expect(res.title).to.be.equal(temp.title);
-					expect(res.content).to.be.equal(temp.content);
-					expect(res.author.firstName).to.be.equal(temp.author.firstName);
-					expect(res.author.lastName).to.be.equal(temp.author.lastName);
-				});
+				  });
+			  })
+			  .then(resp=>{
+				expect(resp.title).to.be.equal(temp.title);
+				expect(resp.content).to.be.equal(temp.content);
+				expect(resp.author.firstName).to.be.equal(temp.author.firstName);
+				expect(resp.lastName).to.be.equal(temp.lastName);
+			  });
 		});
 	});
 
 	describe('delete', function(){
 		it('should delete an entry', function(){
 			let temp;
-			return BlogPost
-				.findOne()
-				.then(res=>{
-					temp = res;
-					return chai.request(app)
-					  .delete(`/posts/${temp.id}`);
-				})
-				.then(res=>{
+			return BlogPost.findOne().then(res=>{
+				temp = res.id;
+				return chai.request(app).delete(`/posts/${res.id}`)
+				  .then(res=>{
 					expect(res).to.be.status(204);
-					return BlogPost.findById(temp.id);
-				})
-				.then(res=>{
-					expect(res).to.be.not.exist;
-				});
+					return BlogPost.findById(temp);
+				  });
+			})
+			.then(res=>{
+				expect(res).to.be.null;
+				expect(res).to.be.not.exist;
+			});
 		});
 	});
 });
