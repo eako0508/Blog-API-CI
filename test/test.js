@@ -131,6 +131,53 @@ describe('Blog', function(){
 		});
 	});
 
+	describe('PUT', function(){
+		it('should update an entry', function(){
+			let temp = {
+				title: faker.lorem.word(),
+				content: faker.lorem.word(),
+				author: {
+					firstName: faker.name.firstName(),
+					lastName: faker.name.lastName()
+				}
+			};
+			/*
+			return chai.request(app)
+			  .get('/posts')
+			  .then(res=>{
+				expect(res).to.be.status(200);
+				temp.id = res.body.id;
+				return chai.request(app)
+				  .put(`/posts/${temp.id}`)
+				  .send(temp)
+				  .then(
+					return BlogPost.findById(temp.id);
+				  );
+			  })
+			  .then(resp=>{
+				expect(resp.body.title).to.be.equal(temp.title);
+			  });
+			*/
+			return BlogPost
+				.findOne()
+				.then(res=>{
+					temp.id = res.id;
+					return chai.request(app)
+						.put(`/posts/${temp.id}`)
+						.send(temp);
+				})
+				.then(res=>{
+					expect(res).to.be.status(204);
+					return BlogPost.findById(temp.id);
+				})
+				.then(res=>{
+					expect(res.title).to.be.equal(temp.title);
+					expect(res.content).to.be.equal(temp.content);
+					expect(res.author.firstName).to.be.equal(temp.author.firstName);
+					expect(res.author.lastName).to.be.equal(temp.author.lastName);
+				});
+		});
+	});
 });
 
 
