@@ -66,6 +66,32 @@ describe('Blog', function(){
 
 		});
 	});
+
+	describe('GET with id', function(){
+		it('should return the same entry', function(){
+			let resBlogpost;
+			return chai.request(app)
+			  .get('/posts')
+			  .then(function(res){
+				expect(res).to.be.a('object');
+				expect(res).to.be.status(200);
+
+				res.body.forEach(function(obj){
+					expect(obj).to.be.a('object');
+					expect(obj).to.include.keys(
+						'title','content','author');
+				});
+
+				resBlogpost = res.body[0];
+				return BlogPost.findById(resBlogpost.id);
+  			  })
+			  .then(function(res){
+					expect(res.title).to.be.equal(resBlogpost.title);
+					expect(res.content).to.be.equal(resBlogpost.content);
+					expect(res.authorName).to.be.equal(resBlogpost.author);
+			  });
+		  });
+	});
 });
 
 
