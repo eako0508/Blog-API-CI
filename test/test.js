@@ -178,6 +178,26 @@ describe('Blog', function(){
 				});
 		});
 	});
+
+	describe('delete', function(){
+		it('should delete an entry', function(){
+			let temp;
+			return BlogPost
+				.findOne()
+				.then(res=>{
+					temp = res;
+					return chai.request(app)
+					  .delete(`/posts/${temp.id}`);
+				})
+				.then(res=>{
+					expect(res).to.be.status(204);
+					return BlogPost.findById(temp.id);
+				})
+				.then(res=>{
+					expect(res).to.be.not.exist;
+				});
+		});
+	});
 });
 
 
