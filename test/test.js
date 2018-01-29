@@ -61,7 +61,8 @@ describe('Blog', function(){
 				return BlogPost.count();
 			})
 		.then(function(count){
-			expect(res.body).to.have.length.of(count);
+//			expect(res.body).to.have.length.of(count);
+			expect(res.body).to.have.lengthOf(count);
 		});
 
 		});
